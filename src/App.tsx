@@ -11,6 +11,9 @@ import { Level5Embeddings } from './levels/Level5Embeddings'
 import { Level6Attention } from './levels/Level6Attention'
 import { Level7Training } from './levels/Level7Training'
 import { Level8Turing } from './levels/Level8Turing'
+import { Level9MultiplyAdd } from './levels/Level9MultiplyAdd'
+import { Level10GpuRace } from './levels/Level10GpuRace'
+import { Level11Memory } from './levels/Level11Memory'
 
 const LEVELS: LevelMeta[] = [
   { id: 0, slug: 'next-word', title: 'Guess the Next Word', concept: 'Next-token prediction' },
@@ -22,6 +25,9 @@ const LEVELS: LevelMeta[] = [
   { id: 6, slug: 'attention', title: 'Sparky\'s Spotlight', concept: 'Attention' },
   { id: 7, slug: 'training', title: 'Watch Sparky Learn', concept: 'Training & loss' },
   { id: 8, slug: 'turing', title: 'The Turing Test', concept: 'Can Sparky fool you?' },
+  { id: 9, slug: 'multiply-add', title: 'It\'s All Multiply-Add', concept: 'The one operation' },
+  { id: 10, slug: 'gpu-race', title: 'CPU vs GPU Race', concept: 'Why AIs use GPUs' },
+  { id: 11, slug: 'memory', title: 'Does Sparky Fit?', concept: 'Memory & model size' },
 ]
 
 const STORAGE_KEY = 'sparky.completed.v1'
@@ -126,18 +132,22 @@ export function App() {
               </span>
             </button>
             {LEVELS.map((l) => (
-              <button
-                key={l.id}
-                className={'nav-item' + (l.id === view ? ' nav-item--active' : '')}
-                onClick={() => setView(l.id)}
-                title={`${l.title} — ${l.concept}`}
-              >
-                <span className="nav-num">{badge(l)}</span>
-                <span className="nav-meta">
-                  <span className="nav-title">{l.title}</span>
-                  <span className="nav-concept">{l.concept}</span>
-                </span>
-              </button>
+              <div key={l.id} className="nav-row">
+                {l.slug === 'multiply-add' && (
+                  <div className="nav-divider">🛠️ Bonus · Engine Room</div>
+                )}
+                <button
+                  className={'nav-item' + (l.id === view ? ' nav-item--active' : '')}
+                  onClick={() => setView(l.id)}
+                  title={`${l.title} — ${l.concept}`}
+                >
+                  <span className="nav-num">{badge(l)}</span>
+                  <span className="nav-meta">
+                    <span className="nav-title">{l.title}</span>
+                    <span className="nav-concept">{l.concept}</span>
+                  </span>
+                </button>
+              </div>
             ))}
           </nav>
         </aside>
@@ -154,12 +164,16 @@ export function App() {
           {view === 6 && <Level6Attention onComplete={() => markComplete(6)} />}
           {view === 7 && <Level7Training onComplete={() => markComplete(7)} />}
           {view === 8 && <Level8Turing onComplete={() => markComplete(8)} />}
+        {view === 9 && <Level9MultiplyAdd onComplete={() => markComplete(9)} />}
+        {view === 10 && <Level10GpuRace onComplete={() => markComplete(10)} />}
+        {view === 11 && <Level11Memory onComplete={() => markComplete(11)} />}
         </main>
       </div>
 
       <footer className="app-footer">
         The whole journey: next-word prediction → tokens → bead jars → memory → temperature →
-        meaning → attention → training → the Turing test. You built a mind. 🎓
+        meaning → attention → training → the Turing test. You built a mind. 🎓 Plus a bonus
+        Engine Room on the hardware that runs it all (GPUs).
       </footer>
     </div>
   )
