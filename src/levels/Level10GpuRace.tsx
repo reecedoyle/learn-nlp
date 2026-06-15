@@ -5,7 +5,7 @@ interface Props {
   onComplete: () => void
 }
 
-const CORES = 16 // GPU "workers" that run at once
+const CORES = 16 // GPU "workers" that run at once — one row each
 const BATCHES = [4, 8, 16, 32, 64, 128, 256]
 
 export function Level10GpuRace({ onComplete }: Props) {
@@ -13,34 +13,33 @@ export function Level10GpuRace({ onComplete }: Props) {
   const [batchIdx, setBatchIdx] = useState(4) // -> 64 jobs by default
   const n = BATCHES[batchIdx]
 
-  const [cpuDone, setCpuDone] = useState(0)
-  const [gpuDone, setGpuDone] = useState(0)
+  // A single tick clock drives both: each tick the CPU finishes 1 job, and every
+  // GPU worker finishes 1 of its own jobs (so a whole column lights at once).
+  const [tick, setTick] = useState(0)
   const [running, setRunning] = useState(false)
   const [finished, setFinished] = useState(false)
   const [won, setWon] = useState(false)
   const timer = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const cpuTicks = n
   const gpuTicks = Math.ceil(n / CORES)
-  const speedup = Math.round(cpuTicks / gpuTicks)
+  const speedup = Math.round(n / gpuTicks)
+  // How many jobs each worker row holds (round-robin); some sit idle for small batches.
+  const counts = Array.from({ length: CORES }, (_, w) => Math.max(0, Math.ceil((n - w) / CORES)))
+  const cpuDone = Math.min(tick, n)
 
   useEffect(() => () => { if (timer.current) clearInterval(timer.current) }, [])
 
   const race = () => {
     if (timer.current) clearInterval(timer.current)
-    setCpuDone(0)
-    setGpuDone(0)
+    setTick(0)
     setFinished(false)
     setRunning(true)
-    let cpu = 0
-    let gpu = 0
+    let t = 0
     const interval = Math.max(10, Math.min(90, Math.round(2400 / n))) // CPU finishes in ~2.4s
     timer.current = setInterval(() => {
-      cpu = Math.min(n, cpu + 1) // CPU: one worker, one job per tick
-      gpu = Math.min(n, gpu + CORES) // GPU: CORES workers, all at once
-      setCpuDone(cpu)
-      setGpuDone(gpu)
-      if (cpu >= n && gpu >= n) {
+      t += 1
+      setTick(t)
+      if (t >= n) {
         if (timer.current) clearInterval(timer.current)
         setRunning(false)
         setFinished(true)
@@ -55,18 +54,9 @@ export function Level10GpuRace({ onComplete }: Props) {
   const changeBatch = (i: number) => {
     if (running) return
     setBatchIdx(i)
-    setCpuDone(0)
-    setGpuDone(0)
+    setTick(0)
     setFinished(false)
   }
-
-  const grid = (done: number, cls: string) => (
-    <div className="race-grid">
-      {Array.from({ length: n }).map((_, i) => (
-        <span key={i} className={'race-cell' + (i < done ? ` race-cell--done ${cls}` : '')} />
-      ))}
-    </div>
-  )
 
   if (phase === 'learn') {
     return (
@@ -90,8 +80,9 @@ export function Level10GpuRace({ onComplete }: Props) {
         <div className="explain-card">
           <h4>🏁 Your job</h4>
           <p>
-            Give both a batch of identical jobs and hit race. The CPU does them one-by-one; the GPU does{' '}
-            {CORES} at a time. Crank the batch up and watch the gap explode.
+            Give both a batch of identical jobs and hit race. The CPU is one worker doing them
+            one-by-one; the GPU is {CORES} workers (one row each) all stepping together. Crank the
+            batch up and watch the gap explode.
           </p>
         </div>
 
@@ -106,8 +97,8 @@ export function Level10GpuRace({ onComplete }: Props) {
     <div className="level">
       <SparkySays mood={won ? 'excited' : running ? 'thinking' : 'happy'} size={72}>
         {won
-          ? `🎉 The GPU finished ${speedup}× faster! It's not smarter — each worker is actually simpler. It just runs ${CORES} jobs side-by-side while the CPU plods through one at a time. That's why AIs are built on GPUs.`
-          : `Each grid has ${n} multiply-add jobs. Hit “Race!” — the CPU does 1 per tick, the GPU does ${CORES} per tick.`}
+          ? `🎉 The GPU finished ${speedup}× faster! It's not smarter — each worker is actually simpler. It just runs ${CORES} jobs side-by-side (one per row) while the CPU plods through one at a time.`
+          : `Each side has ${n} multiply-add jobs. Hit “Race!” — the CPU does 1 per tick; the GPU's ${CORES} workers each do 1 per tick, so a whole column lights at once.`}
       </SparkySays>
 
       <div className="mem-controls">
@@ -127,13 +118,32 @@ export function Level10GpuRace({ onComplete }: Props) {
       <div className="race-row">
         <div className="race-side">
           <div className="race-title">🐢 CPU · 1 worker</div>
-          {grid(cpuDone, 'race-cell--cpu')}
+          <div className="race-grid">
+            {Array.from({ length: n }).map((_, i) => (
+              <span key={i} className={'race-cell' + (i < cpuDone ? ' race-cell--done race-cell--cpu' : '')} />
+            ))}
+          </div>
           <div className="race-stat">{cpuDone} / {n} done · {cpuDone} ticks</div>
         </div>
+
         <div className="race-side">
-          <div className="race-title">⚡ GPU · {CORES} workers</div>
-          {grid(gpuDone, 'race-cell--gpu')}
-          <div className="race-stat">{gpuDone} / {n} done · {Math.ceil(gpuDone / CORES)} ticks</div>
+          <div className="race-title">⚡ GPU · {CORES} workers (one row each)</div>
+          <div className="race-workers">
+            {counts.map((c, w) => (
+              <div key={w} className="race-worker">
+                {c === 0 ? (
+                  <span className="race-idle">idle</span>
+                ) : (
+                  Array.from({ length: c }).map((_, j) => (
+                    <span key={j} className={'race-cell' + (j < Math.min(tick, c) ? ' race-cell--done race-cell--gpu' : '')} />
+                  ))
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="race-stat">
+            {Math.min(tick * CORES, n)} / {n} done · {Math.min(tick, gpuTicks)} ticks
+          </div>
         </div>
       </div>
 
@@ -143,10 +153,10 @@ export function Level10GpuRace({ onComplete }: Props) {
 
       {finished && (
         <div className={'verdict ' + (won ? 'verdict--win' : '')}>
-          <strong>CPU: {cpuTicks} ticks · GPU: {gpuTicks} ticks → {speedup}× faster.</strong>{' '}
+          <strong>CPU: {n} ticks · GPU: {gpuTicks} ticks → {speedup}× faster.</strong>{' '}
           {n < CORES
-            ? `With only ${n} jobs the GPU barely breaks a sweat — try a bigger batch!`
-            : `The GPU's ${CORES} workers all fire at once. Its lead maxes out at ${CORES}× here — that's its number of workers. Real GPUs have thousands.`}
+            ? `Only ${n} jobs, so just ${n} of the ${CORES} workers had anything to do — try a bigger batch to use them all!`
+            : `All ${CORES} workers fired every tick. The GPU's lead maxes out at ${CORES}× here — that's its number of workers. Real GPUs have thousands.`}
         </div>
       )}
     </div>

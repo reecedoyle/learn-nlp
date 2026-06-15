@@ -539,6 +539,9 @@ body {
 }
 .race-title { font-weight: 700; font-size: 14px; margin-bottom: 10px; }
 .race-grid { display: flex; flex-wrap: wrap; gap: 3px; min-height: 60px; align-content: flex-start; }
+.race-workers { display: flex; flex-direction: column; gap: 3px; min-height: 60px; }
+.race-worker { display: flex; gap: 3px; min-height: 13px; align-items: center; }
+.race-idle { font-size: 10px; color: var(--muted); font-style: italic; }
 .race-cell {
   width: 13px; height: 13px;
   border-radius: 3px;
