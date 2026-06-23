@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { SparkySays } from '../components/SparkySays'
 
 interface Props {
@@ -62,6 +62,35 @@ export function Level6Attention({ onComplete }: Props) {
   const [scores, setScores] = useState<number[]>(() => Array(n).fill(1))
   const [won, setWon] = useState(false)
 
+  // "All at once" demo: every word computes its own spotlight — sequentially
+  // (one step per word) vs in parallel (one step total).
+  const [paraMode, setParaMode] = useState<'idle' | 'slow' | 'fast'>('idle')
+  const [paraLit, setParaLit] = useState(0)
+  const [paraRunning, setParaRunning] = useState(false)
+  const paraTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const stopPara = () => { if (paraTimer.current) clearInterval(paraTimer.current) }
+  useEffect(() => stopPara, [])
+
+  const runSlow = () => {
+    stopPara()
+    setParaMode('slow')
+    setParaLit(0)
+    setParaRunning(true)
+    let k = 0
+    paraTimer.current = setInterval(() => {
+      k += 1
+      setParaLit(k)
+      if (k >= n) { stopPara(); setParaRunning(false) }
+    }, 320)
+  }
+  const runFast = () => {
+    stopPara()
+    setParaMode('fast')
+    setParaLit(n)
+    setParaRunning(false)
+  }
+
   // Attention weights from a real softmax over every word except the query.
   const weights = useMemo(() => {
     const ctx = scores.map((s, i) => (i === puzzle.query ? -Infinity : s))
@@ -89,6 +118,10 @@ export function Level6Attention({ onComplete }: Props) {
     setPuzzleIdx(idx)
     setScores(Array(PUZZLES[idx].words.length).fill(1))
     setWon(false)
+    stopPara()
+    setParaMode('idle')
+    setParaLit(0)
+    setParaRunning(false)
   }
 
   // ---- Teaching phase ----
@@ -153,6 +186,8 @@ export function Level6Attention({ onComplete }: Props) {
       <p className="hint">
         Who could <strong>“it”</strong> be? → <strong>{candWords}</strong>. Tap a word to brighten
         Sparky's spotlight on it (tap a few times for more). The spotlight always adds up to 100%.
+        <br />
+        <em>This is the spotlight for just one word, “it” — every word in the sentence has its own.</em>
       </p>
 
       <div className="att-sentence">
@@ -204,12 +239,51 @@ export function Level6Attention({ onComplete }: Props) {
       </div>
 
       {won && (
-        <div className="verdict verdict--win">
-          🎓 That's <strong>attention</strong>: score the words, soft­max the scores into a spotlight
-          that sums to 100%, and the focus decides the meaning. Inside the real me this runs hundreds
-          of times per word — but the machinery is exactly what you just did by hand. Try another
-          puzzle, or move on!
-        </div>
+        <>
+          <div className="verdict verdict--win">
+            🎓 That's <strong>attention</strong>: score the words, soft­max the scores into a spotlight
+            that sums to 100%, and the focus decides the meaning — the machinery is exactly what you just
+            did by hand.
+          </div>
+
+          <div className="explain-card">
+            <h4>🚀 The real superpower: every word, all at once</h4>
+            <p>
+              You aimed the spotlight for just <em>one</em> word, “it”. But <strong>every</strong> word
+              needs its own spotlight. Here's the magic trick that makes me fast: I don't do them in
+              turns — I work out <strong>all</strong> the spotlights <strong>at the same time</strong>,
+              because no word has to wait for another. Try it both ways:
+            </p>
+            <div className="controls-row">
+              <button className="btn" onClick={runSlow} disabled={paraRunning}>🐢 One word at a time</button>
+              <button className="btn btn-primary" onClick={runFast} disabled={paraRunning}>⚡ All at once (attention)</button>
+            </div>
+            <div className="why-sentence" style={{ marginTop: 12 }}>
+              {puzzle.words.map((w, i) => (
+                <span
+                  key={i}
+                  className={'why-word' + (i < (paraMode === 'fast' ? n : paraLit) ? ' why-word--lit' : '')}
+                >
+                  {w}
+                </span>
+              ))}
+            </div>
+            {paraMode !== 'idle' && (
+              <div className="why-stat">
+                {paraMode === 'slow'
+                  ? <>🐢 One at a time → <strong>{n} steps</strong>{paraLit >= n ? ' — slow!' : ` … ${paraLit}/${n}`}</>
+                  : <>⚡ All together → just <strong>1 step</strong>. Every word's spotlight, computed at once.</>}
+              </div>
+            )}
+            <p className="hint" style={{ marginTop: 10 }}>
+              Because the spotlights don't depend on each other, a GPU can compute every one in parallel.
+              That's why attention is so fast — and why it beat the old read-one-word-at-a-time brains
+              (you'll see exactly why in <strong>“Why Transformers Won”</strong>).
+            </p>
+          </div>
+
+          <p className="hint">Try another puzzle above, or move on!</p>
+        </>
       )}
     </div>
   )
