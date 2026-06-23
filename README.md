@@ -45,6 +45,14 @@ npm run preview
 | **L10 — CPU vs GPU Race** | Why AIs use GPUs | A live race: a batch of identical multiply-add jobs done by a CPU (1 worker, sequential) vs a GPU (many workers, parallel). Crank the batch up and watch the GPU win by its core-count. Teaches throughput-on-identical-work, not "smarter". |
 | **L11 — Does Sparky Fit?** | Memory & model size | The model's weights must fit in GPU memory. The kid compares brains (tiny → ChatGPT-class) against devices (phone → an 8-GPU rack) and sees why the biggest models need a data centre, not a phone. |
 
+### 🧬 Bonus chapter — Brain Family (other AI architectures)
+
+| Level | Concept | What it proves |
+|-------|---------|----------------|
+| **L12 — Meet the Cousins** | RNN · LSTM · CNN · Transformer · Diffusion | A visualizer: pick a "cousin" and watch how it processes the same sentence — an RNN's fading memory note, an LSTM's kept word, a CNN's sliding window, a Transformer's all-to-all web, and a Diffusion model denoising a picture from static. Each with a strength/weakness card. |
+| **L13 — Pick the Right Brain** | Which brain for which job | A matching game: tasks → best-fit architecture (cat photo → CNN, "a red dragon" → Diffusion, long story → Transformer, sensor stream → RNN/LSTM…), with the reasoning revealed each round. |
+| **L14 — Why Transformers Won** | Sequential vs parallel | Process the same sentence with an RNN (one word at a time → one GPU worker busy, the rest idle) vs a Transformer (all words at once → the whole GPU crowd working). Ties back to the Engine Room and the 2017 "Attention Is All You Need" moment. |
+
 Every level is the same bead-jar idea seen from a new angle — some poke at a real
 in-browser model (GPT-2, MiniLM), some are built by hand, one is a transparent toy
 of the mechanism. Together they take a kid from "what is a language model?" to

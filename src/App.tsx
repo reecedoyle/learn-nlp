@@ -14,6 +14,9 @@ import { Level8Turing } from './levels/Level8Turing'
 import { Level9MultiplyAdd } from './levels/Level9MultiplyAdd'
 import { Level10GpuRace } from './levels/Level10GpuRace'
 import { Level11Memory } from './levels/Level11Memory'
+import { Level12Cousins } from './levels/Level12Cousins'
+import { Level13PickBrain } from './levels/Level13PickBrain'
+import { Level14WhyTransformer } from './levels/Level14WhyTransformer'
 
 const LEVELS: LevelMeta[] = [
   { id: 0, slug: 'next-word', title: 'Guess the Next Word', concept: 'Next-token prediction' },
@@ -28,6 +31,9 @@ const LEVELS: LevelMeta[] = [
   { id: 9, slug: 'multiply-add', title: 'It\'s All Multiply-Add', concept: 'The one operation' },
   { id: 10, slug: 'gpu-race', title: 'CPU vs GPU Race', concept: 'Why AIs use GPUs' },
   { id: 11, slug: 'memory', title: 'Does Sparky Fit?', concept: 'Memory & model size' },
+  { id: 12, slug: 'cousins', title: 'Meet the Cousins', concept: 'RNN · LSTM · CNN · Transformer' },
+  { id: 13, slug: 'pick-brain', title: 'Pick the Right Brain', concept: 'Which brain for which job' },
+  { id: 14, slug: 'why-transformer', title: 'Why Transformers Won', concept: 'Sequential vs parallel' },
 ]
 
 const STORAGE_KEY = 'sparky.completed.v1'
@@ -136,6 +142,9 @@ export function App() {
                 {l.slug === 'multiply-add' && (
                   <div className="nav-divider">🛠️ Bonus · Engine Room</div>
                 )}
+                {l.slug === 'cousins' && (
+                  <div className="nav-divider">🧬 Bonus · Brain Family</div>
+                )}
                 <button
                   className={'nav-item' + (l.id === view ? ' nav-item--active' : '')}
                   onClick={() => setView(l.id)}
@@ -167,13 +176,16 @@ export function App() {
         {view === 9 && <Level9MultiplyAdd onComplete={() => markComplete(9)} />}
         {view === 10 && <Level10GpuRace onComplete={() => markComplete(10)} />}
         {view === 11 && <Level11Memory onComplete={() => markComplete(11)} />}
+        {view === 12 && <Level12Cousins onComplete={() => markComplete(12)} />}
+        {view === 13 && <Level13PickBrain onComplete={() => markComplete(13)} />}
+        {view === 14 && <Level14WhyTransformer onComplete={() => markComplete(14)} />}
         </main>
       </div>
 
       <footer className="app-footer">
         The whole journey: next-word prediction → tokens → bead jars → memory → temperature →
-        meaning → attention → training → the Turing test. You built a mind. 🎓 Plus a bonus
-        Engine Room on the hardware that runs it all (GPUs).
+        meaning → attention → training → the Turing test. You built a mind. 🎓 Plus bonus chapters:
+        the Engine Room (GPUs) and the Brain Family (RNNs, CNNs, Transformers & more).
       </footer>
     </div>
   )
